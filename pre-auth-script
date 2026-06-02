@@ -1,0 +1,73 @@
+// Auto-detect auth method based on which credentials the user has configured
+const mgmt = pm.collectionVariables.get('baseUrl') || pm.environment.get('baseUrl') || pm.environment.get('host');
+const clientId = pm.collectionVariables.get('client_id') || pm.environment.get('client_id');
+const clientPrivateKey = pm.collectionVariables.get('client_private_key') || pm.environment.get('client_private_key');
+
+if (clientId && clientPrivateKey && mgmt) {
+    const pmlibCode = pm.collectionVariables.get('pmlib_code') || pm.environment.get('pmlib_code') || pm.globals.get('pmlib_code');
+    if (!pmlibCode) {
+        console.warn("OAuth2 configuration detected, but 'pmlib_code' is not set.");
+    } else {
+        try {
+            // Load the crypto utility library
+            eval(pmlibCode);
+
+            const timestampCurrent = Math.floor(Date.now() / 1000);
+            const tokenExpiry = pm.collectionVariables.get('expires') || pm.environment.get('expires') || 0;
+            const cachedToken = pm.collectionVariables.get('access_token') || pm.environment.get('access_token');
+
+            // Check if the current token is still valid (with a 10-second buffer)
+            if (cachedToken && (tokenExpiry - timestampCurrent > 10)) {
+                console.log('OAuth2 Bearer token is still valid.');
+                pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + cachedToken });
+            } else {
+                console.log('OAuth2 Bearer token expired or missing, requesting new token...');
+
+                // Clean host URL to ensure correct audience format
+                const cleanHost = mgmt.replace(/^https?:\/\//, '').split('/')[0];
+                const audience = `https://${cleanHost}/oauth/token/`;
+
+                // Sign JWT assertion using postman-util-lib helper (ES256 signed client assertion)
+                const signedJWS = pmlib.clientAssertPrivateKey(clientPrivateKey, clientId, audience, 3600, 'ES256');
+
+                pm.sendRequest({
+                    url: audience,
+                    method: 'POST',
+                    header: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Authorization': ''
+                    },
+                    body: {
+                        mode: 'urlencoded',
+                        urlencoded: [
+                            { key: 'grant_type', value: 'client_credentials' },
+                            { key: 'client_assertion_type', value: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer' },
+                            { key: 'client_assertion', value: signedJWS },
+                            { key: 'scope', value: 'is_admin use_api' }
+                        ]
+                    }
+                }, (error, response) => {
+                    if (!error && response.code === 200) {
+                        const jsonData = response.json();
+                        pm.collectionVariables.set('access_token', jsonData.access_token);
+                        pm.collectionVariables.set('expires', timestampCurrent + 3600);
+                        pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + jsonData.access_token });
+                        console.log('OAuth2 Bearer token refreshed and injected successfully.');
+                    } else {
+                        console.error('Failed to fetch OAuth2 token:', error || (response ? response.json() : 'No response'));
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Error executing OAuth2 Pre-request script: ", e);
+        }
+    }
+} else {
+    // No OAuth2 credentials — fall back to Basic Auth
+    const username = pm.environment.get('pexip_admin_username') || pm.collectionVariables.get('pexip_admin_username') || 'admin';
+    const password = pm.environment.get('pexip_admin_password') || pm.collectionVariables.get('pexip_admin_password') || '';
+    const rawCredentials = username + ':' + password;
+    const wordArr = CryptoJS.enc.Utf8.parse(rawCredentials);
+    const base64Credentials = CryptoJS.enc.Base64.stringify(wordArr);
+    pm.request.headers.upsert({ key: 'Authorization', value: 'Basic ' + base64Credentials });
+}

@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pre-commit
+        run: pip install pre-commit
+      - name: Run pre-commit
+        run: pre-commit run --all-files
+
+  validate-collection:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate OpenAPI spec
+        run: python -c "import json; json.load(open('openapi.json'))"
+      - name: Validate Postman collection
+        run: python -c "import json; c = json.load(open('pexip_postman_collection.json')); assert c['info']['schema'] == 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json', 'Invalid Postman schema'"
