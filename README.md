@@ -1,5 +1,7 @@
 # Pexip Postman API Collection Tool
 
+[![CI](https://github.com/JoshEstrada-Pexip/pexip-postman/actions/workflows/ci.yml/badge.svg)](https://github.com/JoshEstrada-Pexip/pexip-postman/actions/workflows/ci.yml)
+
 This repo contains utilities to dynamically fetch the JSON schemas from a live Pexip Infinity Management Node, compile them into an OpenAPI 3.0 spec, and then generate a full Postman Collection. You can run the **`generate_spec.py`** against your own Infinity deployment or simply drag and drop the precompiled collections into Postman for the complete collections.
 
 ![Pexip Postman Collection](images/postman-pexip.png)
