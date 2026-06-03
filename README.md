@@ -1,4 +1,4 @@
-# Pexip Postman API Collection Tool
+# Pexip API Collection for Postman
 
 [![CI](https://github.com/JoshEstrada-Pexip/pexip-postman/actions/workflows/ci.yml/badge.svg)](https://github.com/JoshEstrada-Pexip/pexip-postman/actions/workflows/ci.yml)
 
