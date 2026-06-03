@@ -4,7 +4,7 @@
 
 This repo contains utilities to dynamically fetch the JSON schemas from a live Pexip Infinity Management Node, compile them into an OpenAPI 3.0 spec, and then generate a full Postman Collection. You can run the **`generate_spec.py`** against your own Infinity deployment or simply drag and drop the precompiled collections into Postman for the complete collections.
 
-To quickly start using skip to the Quick Start section below. If you want to dynamically generate your own collection, run the spec generator below.
+To **quickly start** using the pre-built collections, skip to the Quick Start section below. If you want to dynamically generate your own collection, run the spec generator below.
 
 ![Pexip Postman Collection](images/postman-pexip.png)
 
