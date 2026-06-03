@@ -8,7 +8,7 @@ This repo contains utilities to dynamically fetch the JSON schemas from a live P
 
 ---
 
-## What are these files?
+## What are these files? Don't care and just want to get straight to using it? Jump to Quick Start section below.
 
 - **`generate_spec.py`**: A Python script that queries the Management Node's active schema registry and writes `openapi.json`.
 - **`openapi.json`**: The compiled 1.17 MB OpenAPI 3.0 specification.
